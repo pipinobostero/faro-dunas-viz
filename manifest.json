@@ -1,9 +1,15 @@
 {
   "name": "Faro - Plano Interactivo de Lotes",
+  "organization": "Faro",
+  "description": "Plano interactivo del loteo Las Dunas, coloreado por status de venta de cada lote",
+  "logoUrl": "https://pipinobostero.github.io/faro-dunas-viz/viz.css",
+  "packageUrl": "https://github.com/pipinobostero/faro-dunas-viz",
+  "supportUrl": "https://github.com/pipinobostero/faro-dunas-viz/issues",
   "components": [
     {
       "id": "planoLotesDunas",
       "name": "Plano de Lotes - Dunas",
+      "iconUrl": "https://pipinobostero.github.io/faro-dunas-viz/viz.css",
       "componentType": "VISUALIZATION",
       "resource": {
         "js": "viz.js",
