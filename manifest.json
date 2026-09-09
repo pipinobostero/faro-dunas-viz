@@ -1,0 +1,76 @@
+{
+  "name": "Faro - Plano Interactivo de Lotes",
+  "components": [
+    {
+      "id": "planoLotesDunas",
+      "name": "Plano de Lotes - Dunas",
+      "componentType": "VISUALIZATION",
+      "resource": {
+        "js": "viz.js",
+        "css": "viz.css"
+      },
+      "data": [
+        {
+          "id": "lote",
+          "label": "Lote (debe decir 'Lote 1', 'Lote 2', etc.)",
+          "elements": [
+            { "id": "loteId", "type": "DIMENSION", "options": { "min": 1, "max": 1 } }
+          ]
+        },
+        {
+          "id": "status",
+          "label": "Status",
+          "elements": [
+            { "id": "statusId", "type": "DIMENSION", "options": { "min": 1, "max": 1 } }
+          ]
+        },
+        {
+          "id": "tooltip",
+          "label": "Datos para el tooltip (opcional, hasta 5)",
+          "elements": [
+            { "id": "tooltipFields", "type": "DIMENSION", "options": { "min": 0, "max": 5 } }
+          ]
+        }
+      ],
+      "style": [
+        {
+          "id": "colorDisponible",
+          "type": "FILL_COLOR",
+          "defaultValue": "#8C8A7E",
+          "label": "Color: Disponible"
+        },
+        {
+          "id": "colorComprado",
+          "type": "FILL_COLOR",
+          "defaultValue": "#3F6B4A",
+          "label": "Color: Comprado"
+        },
+        {
+          "id": "colorFirmado",
+          "type": "FILL_COLOR",
+          "defaultValue": "#1F4A46",
+          "label": "Color: Firmado"
+        },
+        {
+          "id": "colorReserva",
+          "type": "FILL_COLOR",
+          "defaultValue": "#A9793C",
+          "label": "Color: RESERVA"
+        },
+        {
+          "id": "colorInteres",
+          "type": "FILL_COLOR",
+          "defaultValue": "#D4B483",
+          "label": "Color: M. Interes"
+        },
+        {
+          "id": "colorDefault",
+          "type": "FILL_COLOR",
+          "defaultValue": "#CCCCCC",
+          "label": "Color: otro status no listado"
+        }
+      ]
+    }
+  ],
+  "manifestVersion": "V1"
+}

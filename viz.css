@@ -1,0 +1,20 @@
+html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'IBM Plex Sans', Arial, sans-serif; }
+#plano-container { width: 100%; height: 100%; position: relative; }
+#plano-svg { width: 100%; height: 100%; }
+.lote-path { cursor: pointer; stroke: #333; stroke-width: 3; transition: opacity 0.15s ease; }
+.lote-path:hover { opacity: 0.75; stroke-width: 5; }
+#lote-tooltip {
+  position: absolute;
+  display: none;
+  background: #201F1B;
+  color: #F7F6F1;
+  padding: 8px 12px;
+  border-radius: 3px;
+  font-size: 12px;
+  line-height: 1.5;
+  pointer-events: none;
+  z-index: 1000;
+  max-width: 240px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+#lote-tooltip b { display: block; font-size: 13px; margin-bottom: 3px; }
