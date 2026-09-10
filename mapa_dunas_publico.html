@@ -8,7 +8,8 @@
   html, body { margin:0; padding:0; width:100%; height:100%; font-family:'IBM Plex Sans', Arial, sans-serif; background:#F7F6F1; }
   #wrap { width:100%; height:100%; display:flex; flex-direction:column; }
   #map-container { flex:1; position:relative; overflow:hidden; }
-  svg { width:100%; height:100%; display:block; }
+  svg { width:100%; height:100%; display:block; touch-action:none; cursor:grab; }
+  svg.dragging { cursor:grabbing; }
   .lote-path { transition: opacity 0.15s ease; }
   .lote-path:hover { opacity:0.85; }
   .lote-label { font-family:'IBM Plex Sans', Arial, sans-serif; }
@@ -20,7 +21,7 @@
 <body>
 <div id="wrap">
   <div id="map-container">
-    <svg id="plano-svg" viewBox="0 0 4623 2541" xmlns="http://www.w3.org/2000/svg">
+    <svg id="plano-svg" viewBox="0 0 4623 2541" xmlns="http://www.w3.org/2000/svg"><g id="zoomable">
 <path d="M 1534 1737 L 1468 2043 L 1577 2043 L 1579 2026 L 1742 2043 L 1757 1936 L 1739 1928 L 1761 1908 L 1743 1898 L 1762 1901 L 1745 1885 L 1764 1887 L 1778 1780 L 1534 1737 z" fill="#FBFAF6" fill-opacity="0.92" stroke="#4A4A42" stroke-width="3" class="lote-path" data-lote="1"></path>
 <path d="M 1783 1781 L 1748 2043 L 1878 2043 L 1881 2026 L 1908 2043 L 1909 2026 L 1915 2043 L 1923 2026 L 1932 2043 L 2064 2043 L 2068 1954 L 2050 1943 L 2069 1934 L 2052 1901 L 2071 1902 L 2075 1808 L 1783 1781 z" fill="#FBFAF6" fill-opacity="0.92" stroke="#4A4A42" stroke-width="3" class="lote-path" data-lote="2"></path>
 <path d="M 2081 1808 L 2069 2043 L 2208 2043 L 2211 2026 L 2232 2043 L 2241 2026 L 2263 2043 L 2402 2043 L 2391 1809 L 2081 1808 z" fill="#FBFAF6" fill-opacity="0.92" stroke="#4A4A42" stroke-width="3" class="lote-path" data-lote="3"></path>
@@ -118,12 +119,125 @@
 <text x="1746.6" y="1194.3" text-anchor="middle" font-size="42" font-weight="700" fill="#2A2A24" class="lote-label" style="pointer-events:none">47</text><text x="1746.6" y="1232.3" text-anchor="middle" font-size="30" font-weight="600" fill="#2A2A24" class="lote-label" style="pointer-events:none">1005 m²</text>
 <text x="1489.3" y="1141.7" text-anchor="middle" font-size="42" font-weight="700" fill="#2A2A24" class="lote-label" style="pointer-events:none">48</text><text x="1489.3" y="1179.7" text-anchor="middle" font-size="30" font-weight="600" fill="#2A2A24" class="lote-label" style="pointer-events:none">1036 m²</text>
     
-    </svg>
+    </g></svg>
   </div>
   <div id="legend">
     <span class="legend-item"><span class="dot" style="background:#FBFAF6"></span>Lotes Disponibles</span>
     <span class="legend-item"><span class="dot" style="background:#8C8A6F"></span>Lotes Reservados</span>
   </div>
 </div>
+
+<script>
+(function() {
+  var svg = document.getElementById('plano-svg');
+  var g = document.getElementById('zoomable');
+  var scale = 1, panX = 0, panY = 0;
+  var MIN_SCALE = 1, MAX_SCALE = 10;
+
+  function applyTransform() {
+    g.setAttribute('transform', 'translate(' + panX + ',' + panY + ') scale(' + scale + ')');
+  }
+
+  function clientToSvgPoint(clientX, clientY) {
+    var pt = svg.createSVGPoint();
+    pt.x = clientX; pt.y = clientY;
+    var ctm = svg.getScreenCTM();
+    return pt.matrixTransform(ctm.inverse());
+  }
+
+  function zoomAt(clientX, clientY, factor) {
+    var before = clientToSvgPoint(clientX, clientY);
+    var newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * factor));
+    if (newScale === scale) return;
+    // Convert 'before' (in current transformed space) back to pre-transform coords
+    var localX = (before.x - panX) / scale;
+    var localY = (before.y - panY) / scale;
+    scale = newScale;
+    panX = before.x - localX * scale;
+    panY = before.y - localY * scale;
+    clampPan();
+    applyTransform();
+  }
+
+  function clampPan() {
+    // keep at least a little of the drawing on screen; simple clamp based on scale
+    var maxPanMag = 4623 * (scale - 1) + 500;
+    if (scale === 1) { panX = 0; panY = 0; return; }
+    panX = Math.min(maxPanMag, Math.max(-maxPanMag, panX));
+    panY = Math.min(maxPanMag, Math.max(-maxPanMag, panY));
+  }
+
+  svg.addEventListener('wheel', function(ev) {
+    ev.preventDefault();
+    var factor = ev.deltaY < 0 ? 1.15 : 1 / 1.15;
+    zoomAt(ev.clientX, ev.clientY, factor);
+  }, { passive: false });
+
+  // Mouse drag to pan
+  var isDragging = false, lastX = 0, lastY = 0;
+  svg.addEventListener('mousedown', function(ev) {
+    if (scale === 1) return;
+    isDragging = true;
+    lastX = ev.clientX; lastY = ev.clientY;
+    svg.classList.add('dragging');
+  });
+  window.addEventListener('mousemove', function(ev) {
+    if (!isDragging) return;
+    panX += (ev.clientX - lastX);
+    panY += (ev.clientY - lastY);
+    lastX = ev.clientX; lastY = ev.clientY;
+    clampPan();
+    applyTransform();
+  });
+  window.addEventListener('mouseup', function() {
+    isDragging = false;
+    svg.classList.remove('dragging');
+  });
+
+  // Double-click to reset
+  svg.addEventListener('dblclick', function() {
+    scale = 1; panX = 0; panY = 0;
+    applyTransform();
+  });
+
+  // Touch: single-finger pan, two-finger pinch zoom
+  var touchState = null;
+  function dist(t0, t1) {
+    var dx = t0.clientX - t1.clientX, dy = t0.clientY - t1.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  function midpoint(t0, t1) {
+    return { x: (t0.clientX + t1.clientX) / 2, y: (t0.clientY + t1.clientY) / 2 };
+  }
+  svg.addEventListener('touchstart', function(ev) {
+    if (ev.touches.length === 1) {
+      touchState = { mode: 'pan', lastX: ev.touches[0].clientX, lastY: ev.touches[0].clientY };
+    } else if (ev.touches.length === 2) {
+      touchState = { mode: 'pinch', lastDist: dist(ev.touches[0], ev.touches[1]) };
+    }
+  }, { passive: true });
+  svg.addEventListener('touchmove', function(ev) {
+    if (!touchState) return;
+    ev.preventDefault();
+    if (touchState.mode === 'pan' && ev.touches.length === 1 && scale > 1) {
+      var t = ev.touches[0];
+      panX += (t.clientX - touchState.lastX);
+      panY += (t.clientY - touchState.lastY);
+      touchState.lastX = t.clientX; touchState.lastY = t.clientY;
+      clampPan();
+      applyTransform();
+    } else if (touchState.mode === 'pinch' && ev.touches.length === 2) {
+      var newDist = dist(ev.touches[0], ev.touches[1]);
+      var factor = newDist / touchState.lastDist;
+      var mid = midpoint(ev.touches[0], ev.touches[1]);
+      zoomAt(mid.x, mid.y, factor);
+      touchState.lastDist = newDist;
+    }
+  }, { passive: false });
+  svg.addEventListener('touchend', function(ev) {
+    if (ev.touches.length === 0) touchState = null;
+  });
+})();
+</script>
 </body>
 </html>
